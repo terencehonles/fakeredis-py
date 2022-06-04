@@ -166,3 +166,20 @@ class FakeStrictRedis(FakeRedisMixin, redis.StrictRedis):
 
 class FakeRedis(FakeRedisMixin, redis.Redis):
     pass
+
+
+# RQ
+# Configuration to pretend there is a Redis service available.
+# Set up the connection before RQ Django reads the settings.
+# The connection must be the same because in fakeredis connections
+# do not share the state. Therefore, we define a singleton object to reuse it.
+class FakeRedisConnSingleton:
+    """Singleton FakeRedis connection."""
+
+    def __init__(self):
+        self.conn = None
+
+    def __call__(self, _, strict):
+        if not self.conn:
+            self.conn = FakeStrictRedis() if strict else FakeRedis()
+        return self.conn
